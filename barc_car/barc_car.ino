@@ -1,16 +1,16 @@
 /* ---------------------------------------------------------------------------
-# Licensing Information: You are free to use or extend these projects for
-# education or reserach purposes provided that (1) you retain this notice
-# and (2) you provide clear attribution to UC Berkeley, including a link
-# to http://barc-project.com
-#
-# Attibution Information: The barc project ROS code-base was developed
-# at UC Berkeley in the Model Predictive Control (MPC) lab by Jon Gonzales
-# (jon.gonzales@berkeley.edu)  Development of the web-server app Dator was
-# based on an open source project by Bruce Wootton, with contributions from
-# Kiet Lam (kiet.lam@berkeley.edu). The RC Input code was based on sample code
-# from http://rcarduino.blogspot.com/2012/04/how-to-read-multiple-rc-channels-draft.html
-# --------------------------------------------------------------------------- */
+  # Licensing Information: You are free to use or extend these projects for
+  # education or reserach purposes provided that (1) you retain this notice
+  # and (2) you provide clear attribution to UC Berkeley, including a link
+  # to http://barc-project.com
+  #
+  # Attibution Information: The barc project ROS code-base was developed
+  # at UC Berkeley in the Model Predictive Control (MPC) lab by Jon Gonzales
+  # (jon.gonzales@berkeley.edu)  Development of the web-server app Dator was
+  # based on an open source project by Bruce Wootton, with contributions from
+  # Kiet Lam (kiet.lam@berkeley.edu). The RC Input code was based on sample code
+  # from http://rcarduino.blogspot.com/2012/04/how-to-read-multiple-rc-channels-draft.html
+  # --------------------------------------------------------------------------- */
 
 
 // include libraries
@@ -18,7 +18,7 @@
 #include <MsTimer2.h>
 
 /**************************************************************************
-CAR CLASS DEFINITION (would like to refactor into car.cpp and car.h but can't figure out arduino build process so far)
+  CAR CLASS DEFINITION (would like to refactor into car.cpp and car.h but can't figure out arduino build process so far)
 **************************************************************************/
 class Car {
   public:
@@ -55,7 +55,7 @@ class Car {
     const int THROTTLE_PIN = 7;
     const int STEERING_PIN = 8;
     const int MOTOR_PIN = 7;
-    const int SERVO_PIN= 8;
+    const int SERVO_PIN = 8;
 
     // Car properties
     // unclear what this is for
@@ -63,15 +63,15 @@ class Car {
 
     // Motor limits
     // TODO  fix limits?
-    const int MOTOR_MAX = 2000;
-    const int MOTOR_MIN = 800;
+    const int MOTOR_MAX = 1800;
+    const int MOTOR_MIN = 1200;
     const int MOTOR_NEUTRAL = 1500;
     const int THETA_CENTER = 1500;
     const int THETA_MAX = 1900;
     const int THETA_MIN = 1100;
-    
+
     // Timer interrupt
-    const int dt_interrupt = 5;
+    const int dt_interrupt = 100;
 
     // Interfaces to motor and steering actuators
     Servo motor;
@@ -92,7 +92,7 @@ class Car {
     volatile uint16_t steeringInShared;
     uint16_t throttleIn = 1500;
     uint16_t steeringIn = 1500;
- 
+
     // motor / servo neutral state (milliseconds)
     float throttle_neutral_ms = 1500.0;
     float servo_neutral_ms = 1500.0;
@@ -111,10 +111,10 @@ class Car {
 
 
     // Timing parameters
-    // F = front, B = back, L = left, R = right   
+    // F = front, B = back, L = left, R = right
     volatile unsigned long FL_new_time = 0;
     volatile unsigned long BL_new_time = 0;
-    volatile unsigned long FL_old_time = 0; 
+    volatile unsigned long FL_old_time = 0;
     volatile unsigned long BL_old_time = 0;
     unsigned long FL_DeltaTime = 0;
     unsigned long BL_DeltaTime = 0;
@@ -139,7 +139,7 @@ Car car;
 // figure it out, please atone for my sins.
 void incFLCallback() {
   car.incFL();
-  Serial.println("FLCallback!!!");
+  //  Serial.println("FLCallback!!!");
 }
 void incBLCallback() {
   car.incBL();
@@ -152,7 +152,7 @@ void calcThrottleCallback() {
 }
 void timerInterruptCallback() {
   car.calcVelocityEstimate();
-  Serial.println("timer interrupt!!!");
+  //  Serial.println("timer interrupt!!!");
 }
 
 // Variables for time step
@@ -161,7 +161,7 @@ volatile unsigned long t0;
 volatile unsigned long ecu_t0;
 
 /**************************************************************************
-ARDUINO INITIALIZATION
+  ARDUINO INITIALIZATION
 **************************************************************************/
 void setup()
 {
@@ -176,31 +176,56 @@ void setup()
   ecu_t0 = millis();
 }
 
+void encoder_test(void) {
+  for (int speed = 1500; speed < 1900; speed++) {
+    car.writeToActuators(speed, 1500);
+    Serial.print(car.getVelEstBL());
+    Serial.print("\t");
+    Serial.println(car.getVelEstFL());
+    //      Serial.print("\t");
+    //      Serial.print(car.getEncoderBL());
+    //      Serial.print("\t");
+    //      Serial.println(car.getEncoderFL());
+    delay(10);
+  }
+  for (int speed = 1900; speed >= 1500; speed--) {
+    car.writeToActuators(speed, 1500);
+    Serial.print(car.getVelEstBL());
+    Serial.print("\t");
+    Serial.println(car.getVelEstFL());
+    //      Serial.print("\t");
+    //      Serial.print(car.getEncoderBL());
+    //      Serial.print("\t");
+    //      Serial.println(car.getEncoderFL());
+    delay(10);
+  }
+}
 
+void steer_test(void) {
+  for (int steer = 1100; steer < 1900; steer++) {
+    car.writeToActuators(0, steer);
+    delay(10);
+  }
+  for (int steer = 1900; steer >= 1100; steer--) {
+    car.writeToActuators(0, steer);
+    delay(10);
+  }
+}
 /**************************************************************************
-ARDUINO MAIN lOOP
+  ARDUINO MAIN lOOP
 **************************************************************************/
 void loop() {
-  // compute time elapsed (in ms)
-  for (int speed = 1500; speed < 1900; speed++){
-    car.writeToActuators(speed, 1500);
-    Serial.print(car.getVelEstBL());
-    Serial.print("\t");
-    Serial.println(car.getVelEstFL());
-    delay(10);
-  }
-  for (int speed = 1900; speed >= 1500; speed--){
-    car.writeToActuators(speed, 1500);
-    Serial.print(car.getVelEstBL());
-    Serial.print("\t");
-    Serial.println(car.getVelEstFL());
-    delay(10);
-  }
+  //  Serial.print(car.getVelEstFL());
+  //  Serial.print('\t');
+  //  Serial.println(car.getEncoderFL());
+  //   compute time elapsed (in ms)
+  steer_test();
+  //car.writeToActuators(1600, 1600);
   /*
-  dt = millis() - t0;
+    dt = millis() - t0;
 
 
-  if (dt > 50) {
+    if (dt > 50) {
     car.readAndCopyInputs();
 
     // publish velocity estimate
@@ -213,28 +238,36 @@ void loop() {
     encoder.BL = car.getEncoderBL();
 
     t0 = millis();
-  }
+    }
   */
 }
 
 /**************************************************************************
-CAR CLASS IMPLEMENTATION
+  CAR CLASS IMPLEMENTATION
 **************************************************************************/
 float Car::saturateMotor(float x) {
-  if (x > MOTOR_MAX) { x = MOTOR_MAX; }
-  if (x < MOTOR_MIN) { x = MOTOR_MIN; }
+  if (x > MOTOR_MAX) {
+    x = MOTOR_MAX;
+  }
+  if (x < MOTOR_MIN) {
+    x = MOTOR_MIN;
+  }
   return x;
 }
 
 float Car::saturateServo(float x) {
-  if (x > THETA_MAX) { x = THETA_MAX; }
-  if (x < THETA_MIN) { x = THETA_MIN; }
+  if (x > THETA_MAX) {
+    x = THETA_MAX;
+  }
+  if (x < THETA_MIN) {
+    x = THETA_MIN;
+  }
   return x;
 }
 
 void Car::initEncoders() {
-//  pinMode(ENC_FL_PIN, INPUT_PULLUP);
-//  pinMode(ENC_BL_PIN, INPUT_PULLUP);
+  //  pinMode(ENC_FL_PIN, INPUT_PULLUP);
+  //  pinMode(ENC_BL_PIN, INPUT_PULLUP);
   attachInterrupt(ENC_FL_INTERRUPT_PIN, incFLCallback, CHANGE);
   attachInterrupt(ENC_BL_INTERRUPT_PIN, incBLCallback, CHANGE);
   MsTimer2::set(dt_interrupt, timerInterruptCallback);
@@ -244,8 +277,8 @@ void Car::initEncoders() {
 void Car::initRCInput() {
   pinMode(THROTTLE_PIN, INPUT_PULLUP);
   pinMode(STEERING_PIN, INPUT_PULLUP);
-//  enableInterrupt(THROTTLE_PIN, calcThrottleCallback, CHANGE);
-//  enableInterrupt(STEERING_PIN, calcSteeringCallback, CHANGE);
+  //  enableInterrupt(THROTTLE_PIN, calcThrottleCallback, CHANGE);
+  //  enableInterrupt(STEERING_PIN, calcSteeringCallback, CHANGE);
 }
 
 void Car::initActuators() {
@@ -271,16 +304,20 @@ uint16_t Car::microseconds2PWM(uint16_t microseconds) {
   // ref: camelsoftware.com/2015/12/25/reading-pwm-signals-from-an-rc-receiver-with-arduino
 
   // saturate signal
-  if(microseconds > 2000 ){ microseconds = 2000; }
-  if(microseconds < 1000 ){ microseconds = 1000; }
+  if (microseconds > 2000 ) {
+    microseconds = 2000;
+  }
+  if (microseconds < 1000 ) {
+    microseconds = 1000;
+  }
 
   // map signal from microseconds to pwm angle
-  uint16_t pwm = (microseconds - 1000.0)/1000.0*180;
+  uint16_t pwm = (microseconds - 1000.0) / 1000.0 * 180;
   return static_cast<uint8_t>(pwm);
 }
 
 void Car::calcThrottle() {
-  if(digitalRead(THROTTLE_PIN) == HIGH) {
+  if (digitalRead(THROTTLE_PIN) == HIGH) {
     // rising edge of the signal pulse, start timing
     throttleStart = micros();
   } else {
@@ -292,7 +329,7 @@ void Car::calcThrottle() {
 }
 
 void Car::calcSteering() {
-  if(digitalRead(STEERING_PIN) == HIGH) {
+  if (digitalRead(STEERING_PIN) == HIGH) {
     steeringStart = micros();
   } else {
     steeringInShared = (uint16_t)(micros() - steeringStart);
@@ -300,54 +337,56 @@ void Car::calcSteering() {
   }
 }
 
-void Car::killMotor(){
+void Car::killMotor() {
   motor.writeMicroseconds( (uint16_t) throttle_neutral_ms );
   steering.writeMicroseconds( (uint16_t) servo_neutral_ms );
 }
 
 void Car::incFL() {
-  FL_count_shared++;
-  FL_old_time = FL_new_time; 
-  FL_new_time = micros();
-  updateFlagsShared |= FL_FLAG;
+  //  FL_count_shared++;
+  FL_count++;
+  //  FL_old_time = FL_new_time;
+  //  FL_new_time = micros();
+  //  updateFlagsShared |= FL_FLAG;
 }
 
 void Car::incBL() {
-  BL_count_shared++;
-  BL_old_time = BL_new_time;
-  BL_new_time = micros();
-  updateFlagsShared |= BL_FLAG;
+  //  BL_count_shared++;
+  BL_count++;
+  //  BL_old_time = BL_new_time;
+  //  BL_new_time = micros();
+  //  updateFlagsShared |= BL_FLAG;
 }
 
-void Car::readAndCopyInputs() {
-  // check shared update flags to see if any channels have a new signal
-  if (updateFlagsShared) {
-    // Turn off interrupts, make local copies of variables set by interrupts,
-    // then turn interrupts back on. Without doing this, an interrupt could
-    // update a shared multibyte variable while the loop is in the middle of
-    // reading it
-    noInterrupts();
-    // make local copies
-    updateFlags = updateFlagsShared;
-    if(updateFlags & THROTTLE_FLAG) {
-      throttleIn = throttleInShared;
-    }
-    if(updateFlags & STEERING_FLAG) {
-      steeringIn = steeringInShared;
-    }
-    if(updateFlags & FL_FLAG) {
-      FL_count = FL_count_shared;
-      FL_DeltaTime = FL_new_time - FL_old_time;
-    }
-    if(updateFlags & BL_FLAG) {
-      BL_count = BL_count_shared;
-      BL_DeltaTime = BL_new_time - BL_old_time;
-    }
-    // clear shared update flags and turn interrupts back on
-    updateFlagsShared = 0;
-    interrupts();
-  }
-}
+//void Car::readAndCopyInputs() {
+//  // check shared update flags to see if any channels have a new signal
+//  if (updateFlagsShared) {
+//    // Turn off interrupts, make local copies of variables set by interrupts,
+//    // then turn interrupts back on. Without doing this, an interrupt could
+//    // update a shared multibyte variable while the loop is in the middle of
+//    // reading it
+//    noInterrupts();
+//    // make local copies
+//    updateFlags = updateFlagsShared;
+//    if (updateFlags & THROTTLE_FLAG) {
+//      throttleIn = throttleInShared;
+//    }
+//    if (updateFlags & STEERING_FLAG) {
+//      steeringIn = steeringInShared;
+//    }
+//    if (updateFlags & FL_FLAG) {
+//      FL_count = FL_count_shared;
+//      FL_DeltaTime = FL_new_time - FL_old_time;
+//    }
+//    if (updateFlags & BL_FLAG) {
+//      BL_count = BL_count_shared;
+//      BL_DeltaTime = BL_new_time - BL_old_time;
+//    }
+//    // clear shared update flags and turn interrupts back on
+//    updateFlagsShared = 0;
+//    interrupts();
+//  }
+//}
 
 uint16_t Car::getRCThrottle() {
   return throttleIn;
@@ -371,17 +410,23 @@ float Car::getVelEstBL() {
 
 void Car::calcVelocityEstimate() {
 
-    // vel = distance / time
-    // distance = 2*pi*R/8 since there are 8 partitions
-    if(FL_count_old != FL_count){
-        vel_FL = pi*R/8.0/dt_interrupt;}
-    else{ vel_FL = 0.0; }
+  // vel = distance / time
+  // distance = 2*pi*R/8 since there are 8 partitions
+  if (FL_count_old != FL_count) {
+    vel_FL = (float)(FL_count - FL_count_old) * pi * R / 8.0 / (float)dt_interrupt * 1000;
+  }
+  else {
+    vel_FL = 0.0;
+  }
 
-    if(BL_count_old != BL_count){
-        vel_BL = pi*R/8.0/dt_interrupt;}
-    else{ vel_BL = 0.0; }
+  if (BL_count != 0) {
+    vel_BL = (float)(BL_count - BL_count_old) * pi * R / 8.0 / (float)dt_interrupt * 1000;
+  }
+  else {
+    vel_BL = 0.0;
+  }
 
-    // update history
-    FL_count_old = FL_count;
-    BL_count_old = BL_count;
+  // update history
+  FL_count_old = FL_count;
+  BL_count_old = BL_count;
 }
