@@ -14,6 +14,9 @@
 
 
 // include libraries
+#include <ros.h>
+#include <geometry_msgs/Twist.h>
+
 #include <Servo.h>
 #include <MsTimer2.h>
 
@@ -137,6 +140,8 @@ Car car;
 // These are really sad solutions to the fact that using class member functions
 // as callbacks is complicated in C++ and I haven't figured it out. If you can
 // figure it out, please atone for my sins.
+
+
 void incFLCallback() {
   car.incFL();
   //  Serial.println("FLCallback!!!");
@@ -160,16 +165,30 @@ volatile unsigned long dt;
 volatile unsigned long t0;
 volatile unsigned long ecu_t0;
 
+void rosTwistCallback(const geometry_msgs::Twist& twist_msg){
+  //-30 ~ +30 -> 1100 ~ 1900
+  //0 ~ +4 -> 1500 ~ 1800
+  
+  car.writeToActuators(1500 + twist_msg.linear.x * 75, twist_msg.angular.z * 10 + 1500);
+}
+
+ros::NodeHandle  nh;
+
+ros::Subscriber<geometry_msgs::Twist> sub_twist("twist_msg", rosTwistCallback);
+
 /**************************************************************************
   ARDUINO INITIALIZATION
 **************************************************************************/
 void setup()
 {
   // Set up encoders, rc input, and actuators
+  nh.initNode();
+  nh.subscribe(sub_twist);
+
   car.initEncoders();
   car.initActuators();
 
-  Serial.begin(115200);
+//  Serial.begin(115200);
 
   car.armActuators();
   t0 = millis();
@@ -179,9 +198,9 @@ void setup()
 void encoder_test(void) {
   for (int speed = 1500; speed < 1900; speed++) {
     car.writeToActuators(speed, 1500);
-    Serial.print(car.getVelEstBL());
-    Serial.print("\t");
-    Serial.println(car.getVelEstFL());
+//    Serial.print(car.getVelEstBL());
+//    Serial.print("\t");
+//    Serial.println(car.getVelEstFL());
     //      Serial.print("\t");
     //      Serial.print(car.getEncoderBL());
     //      Serial.print("\t");
@@ -190,9 +209,9 @@ void encoder_test(void) {
   }
   for (int speed = 1900; speed >= 1500; speed--) {
     car.writeToActuators(speed, 1500);
-    Serial.print(car.getVelEstBL());
-    Serial.print("\t");
-    Serial.println(car.getVelEstFL());
+//    Serial.print(car.getVelEstBL());
+//    Serial.print("\t");
+//    Serial.println(car.getVelEstFL());
     //      Serial.print("\t");
     //      Serial.print(car.getEncoderBL());
     //      Serial.print("\t");
@@ -215,11 +234,13 @@ void steer_test(void) {
   ARDUINO MAIN lOOP
 **************************************************************************/
 void loop() {
+  nh.spinOnce();
+  delay(1);
   //  Serial.print(car.getVelEstFL());
   //  Serial.print('\t');
   //  Serial.println(car.getEncoderFL());
   //   compute time elapsed (in ms)
-  steer_test();
+  //steer_test();
   //car.writeToActuators(1600, 1600);
   /*
     dt = millis() - t0;
