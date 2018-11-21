@@ -16,6 +16,7 @@
 // include libraries
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Float32.h>
 
 #include <Servo.h>
 #include <MsTimer2.h>
@@ -172,9 +173,13 @@ void rosTwistCallback(const geometry_msgs::Twist& twist_msg){
   car.writeToActuators(1500 + twist_msg.linear.x * 75, twist_msg.angular.z * 13.333 + 1500 + steer_center_bias);
 }
 
-ros::NodeHandle  nh;
+
+std_msgs::Float32 front_velocity;
+
+ros::NodeHandle nh;
 
 ros::Subscriber<geometry_msgs::Twist> sub_twist("twist_msg", rosTwistCallback);
+ros::Publisher front_speed("front_encoder", &front_velocity);
 
 /**************************************************************************
   ARDUINO INITIALIZATION
@@ -184,6 +189,7 @@ void setup()
   // Set up encoders, rc input, and actuators
   nh.initNode();
   nh.subscribe(sub_twist);
+  nh.advertise(front_speed);
 
   car.initEncoders();
   car.initActuators();
@@ -234,8 +240,10 @@ void steer_test(void) {
   ARDUINO MAIN lOOP
 **************************************************************************/
 void loop() {
+  front_velocity.data  = car.getVelEstFL();
+  front_speed.publish(&front_velocity); 
   nh.spinOnce();
-  delay(1);
+  delay(5);
   //  Serial.print(car.getVelEstFL());
   //  Serial.print('\t');
   //  Serial.println(car.getEncoderFL());
