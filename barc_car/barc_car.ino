@@ -168,8 +168,8 @@ volatile unsigned long ecu_t0;
 void rosTwistCallback(const geometry_msgs::Twist& twist_msg){
   //-30 ~ +30 -> 1100 ~ 1900
   //0 ~ +4 -> 1500 ~ 1800
-  
-  car.writeToActuators(1500 + twist_msg.linear.x * 75, twist_msg.angular.z * 10 + 1500);
+  int steer_center_bias = -50;
+  car.writeToActuators(1500 + twist_msg.linear.x * 75, twist_msg.angular.z * 13.333 + 1500 + steer_center_bias);
 }
 
 ros::NodeHandle  nh;
